@@ -1,0 +1,18 @@
+# editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.icloud
+*.iml
+
+# windows virtualenv
+Lib
+Scripts
+pyvenv.cfg
+
+# python
+__pycache__
+*.pyc
