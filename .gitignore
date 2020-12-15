@@ -16,3 +16,6 @@ pyvenv.cfg
 # python
 __pycache__
 *.pyc
+
+# properties file
+*.ini
