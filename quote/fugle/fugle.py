@@ -1,5 +1,8 @@
 import datetime
+import json
+import os
 from pprint import pprint
+import time
 
 import requests
 
@@ -14,9 +17,11 @@ class Fugle():
         self.tick = 30 # call API every 30 seconds
         self.quotes = []
         self.transactions = []
-        self.quantity = 0
-        self.on_time = datetime.time(8, 58)
-        self.off_time = datetime.time(13, 30)
+        self.bought_quantity = 0
+        self.sold_quantity = 0
+        self.total_quantity = 0
+        self.on_time = datetime.time(8, 55)
+        self.off_time = datetime.time(13, 35)
         self.is_closed = False
 
     def is_active(self):
@@ -29,7 +34,8 @@ class Fugle():
     def exec(self):
         while self.is_active() and not self.is_closed:
             self.quote()
-            self.__diff()
+            self.diff()
+            time.sleep(self.tick)
 
     def quote(self):
         resp = requests.get(self.url)
@@ -37,11 +43,37 @@ class Fugle():
         self.is_closed = json['data']['quote']['isClosed']
         print(f'self.is_close = {self.is_closed}')
         self.quotes.append(json['data']['quote']['order'])
+        self.quotes[-1]['trade'] = json['data']['quote']['trade']
         pprint(self.quotes[-1])
         #pprint(json)
 
-    def __diff(self):
-        pass
+    def diff(self):
+        trade_price = self.quotes[-1]['trade']['price']
+        trade_quantity = self.quotes[-1]['trade']['unit']
+        ask_diff = abs(self.quotes[-1]['bestAsks'][0]['price'] - trade_price)
+        bid_diff = abs(trade_price - self.quotes[-1]['bestBids'][-1]['price'])
+        if ask_diff < bid_diff:
+            self.sold_quantity += trade_quantity
+        elif ask_diff > bid_diff:
+            self.bought_quantity += trade_quantity
+        else:
+            self.sold_quantity += trade_quantity / 2
+            self.bought_quantity += trade_quantity / 2
+        self.total_quantity = self.bought_quantity - self.sold_quantity
+        print(f'{self.bought_quantity} {self.sold_quantity} {self.total_quantity}')
+
+    def dump_to_file(self):
+        if self.quotes is None or len(self.quotes) == 0:
+            pass
+        else:
+
+            print(f'==> dump to file')
+
+            filename = './dump.txt'
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+            with open(filename, 'w+', encoding='utf-8') as f:
+                json.dump(self.quotes, f, ensure_ascii=False, indent=4)
 
     def get_transactions(self):
         pass
