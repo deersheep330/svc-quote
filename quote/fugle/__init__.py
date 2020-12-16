@@ -1,0 +1,1 @@
+from .fugle import Fugle
