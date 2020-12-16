@@ -20,6 +20,7 @@ class Fugle():
         self.bought_quantity = 0
         self.sold_quantity = 0
         self.total_quantity = 0
+        self.total_units_from_api = 0
         self.on_time = datetime.time(8, 55)
         self.off_time = datetime.time(13, 35)
         self.is_closed = False
@@ -41,7 +42,9 @@ class Fugle():
         resp = requests.get(self.url)
         json = resp.json()
         self.is_closed = json['data']['quote']['isClosed']
+        self.total_units_from_api = json['data']['quote']['total']['unit']
         print(f'self.is_close = {self.is_closed}')
+        print(f'self.total_units_from_api = {self.total_units_from_api}')
         self.quotes.append(json['data']['quote']['order'])
         self.quotes[-1]['trade'] = json['data']['quote']['trade']
         pprint(self.quotes[-1])
