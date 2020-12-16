@@ -72,7 +72,7 @@ class Fugle():
 
             print(f'==> dump to file')
 
-            filename = './dump.txt'
+            filename = f'./dump-{self.symbol}.txt'
             os.makedirs(os.path.dirname(filename), exist_ok=True)
 
             with open(filename, 'w+', encoding='utf-8') as f:
