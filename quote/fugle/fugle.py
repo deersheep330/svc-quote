@@ -2,16 +2,24 @@ import datetime
 import json
 import os
 from pprint import pprint
-import time
 import asyncio
 
 import requests
 
+from ..db import create_engine, get_db_hostname, start_session, insert
+from ..models import FugleOverSold, FugleOverBought
 from ..utils import get_api_token
 
 class Fugle():
 
-    def __init__(self, symbol):
+    def __init__(self, type, symbol):
+        self.model = None
+        if type == 'overbought':
+            self.model = FugleOverBought
+        elif type == 'oversold':
+            self.model = FugleOverSold
+        else:
+            raise Exception(f'unknown type: {type}')
         self.symbol = symbol
         self.api_token = get_api_token()
         self.url = f'https://api.fugle.tw/realtime/v0/intraday/quote?symbolId={self.symbol}&apiToken={self.api_token}'
@@ -22,9 +30,11 @@ class Fugle():
         self.sold_quantity = 0
         self.total_quantity = 0
         self.total_units_from_api = 0
+        self.normalized_quantity = 0
         self.on_time = datetime.time(8, 55)
         self.off_time = datetime.time(13, 35)
         self.is_closed = False
+        self.date = None
 
     def is_active(self):
         now = datetime.datetime.now().time()
@@ -43,6 +53,11 @@ class Fugle():
         print(f'{self.symbol} self.total_units_from_api = {self.total_units_from_api}')
         print(f'{self.symbol} overall = {self.bought_quantity + self.sold_quantity}')
         print(f'{self.symbol} self.total_quantity = {self.total_quantity}')
+
+        self.date = datetime.datetime.strptime(self.quotes[-1].at, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        print(f'{self.symbol} self.date = {self.date}')
+
+        self.normalized_quantity = int(self.total_quantity * self.total_units_from_api / (self.bought_quantity + self.sold_quantity))
 
     def quote(self):
         resp = requests.get(self.url)
@@ -85,8 +100,18 @@ class Fugle():
             with open(filename, 'w+', encoding='utf-8') as f:
                 json.dump(self.quotes, f, ensure_ascii=False, indent=4)
 
-    def get_transactions(self):
-        pass
+    def save_to_db(self):
+        engine = create_engine('mysql+pymysql', 'root', 'admin', get_db_hostname(), '3306', 'mydb')
+        session = start_session(engine)
 
-    def get_quantity(self):
-        pass
+        _dict = {
+            'symbol': self.symbol,
+            'date': self.date,
+            'quantity': self.normalized_quantity
+        }
+        try:
+            insert(session, self.model, _dict)
+        except Exception as e:
+            print(f'insert entry error: {e}')
+        session.commit()
+        session.close()

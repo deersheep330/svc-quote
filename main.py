@@ -31,8 +31,12 @@ if __name__ == '__main__':
 
     symbols = []
     tasks = []
-    for ele in over_boughts + over_solds:
-        symbols.append(Fugle(ele.symbol))
+    for ele in over_boughts:
+        symbols.append(Fugle('overbought', ele.symbol))
+        tasks.append(symbols[-1].exec())
+
+    for ele in over_solds:
+        symbols.append(Fugle('oversold', ele.symbol))
         tasks.append(symbols[-1].exec())
 
     loop = asyncio.get_event_loop()
@@ -41,3 +45,4 @@ if __name__ == '__main__':
 
     for symbol in symbols:
         symbol.dump_to_file()
+        symbol.save_to_db()
