@@ -1,6 +1,7 @@
 from quote.db import create_engine, get_db_hostname, start_session
 from quote.fugle import Fugle
 from quote.models import TwseOverBought, TwseOverSold
+import asyncio
 
 from datetime import date, timedelta
 
@@ -29,12 +30,14 @@ if __name__ == '__main__':
         raise Exception('Cannot get TWSE oversold/overbought records')
 
     symbols = []
+    tasks = []
     for ele in over_boughts + over_solds:
-        symbols.append(ele.symbol)
-    print(symbols)
-'''
-    test = Fugle('2303')
-    #test.exec()
-    test.quote()
-    test.dump_to_file()
-'''
+        symbols.append(Fugle(ele.symbol))
+        tasks.append(symbols[-1].exec())
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
+
+    for symbol in symbols:
+        symbol.dump_to_file()

@@ -3,6 +3,7 @@ import json
 import os
 from pprint import pprint
 import time
+import asyncio
 
 import requests
 
@@ -32,21 +33,27 @@ class Fugle():
         else:
             return False
 
-    def exec(self):
+    async def exec(self):
         while self.is_active() and not self.is_closed:
             self.quote()
             self.diff()
-            time.sleep(self.tick)
+            #time.sleep(self.tick)
+            await asyncio.sleep(self.tick)
+        print(f'{self.symbol} self.is_close = {self.is_closed}')
+        print(f'{self.symbol} self.total_units_from_api = {self.total_units_from_api}')
+        print(f'{self.symbol} overall = {self.bought_quantity + self.sold_quantity}')
+        print(f'{self.symbol} self.total_quantity = {self.total_quantity}')
 
     def quote(self):
         resp = requests.get(self.url)
         json = resp.json()
         self.is_closed = json['data']['quote']['isClosed']
         self.total_units_from_api = json['data']['quote']['total']['unit']
-        print(f'self.is_close = {self.is_closed}')
-        print(f'self.total_units_from_api = {self.total_units_from_api}')
+        #print(f'self.is_close = {self.is_closed}')
+        #print(f'self.total_units_from_api = {self.total_units_from_api}')
         self.quotes.append(json['data']['quote']['order'])
         self.quotes[-1]['trade'] = json['data']['quote']['trade']
+        print(self.symbol + " : ")
         pprint(self.quotes[-1])
         #pprint(json)
 
@@ -63,7 +70,7 @@ class Fugle():
             self.sold_quantity += trade_quantity / 2
             self.bought_quantity += trade_quantity / 2
         self.total_quantity = self.bought_quantity - self.sold_quantity
-        print(f'{self.bought_quantity} {self.sold_quantity} {self.total_quantity}')
+        #print(f'{self.bought_quantity} {self.sold_quantity} {self.total_quantity}')
 
     def dump_to_file(self):
         if self.quotes is None or len(self.quotes) == 0:
