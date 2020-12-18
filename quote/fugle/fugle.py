@@ -54,7 +54,7 @@ class Fugle():
         print(f'{self.symbol} overall = {self.bought_quantity + self.sold_quantity}')
         print(f'{self.symbol} self.total_quantity = {self.total_quantity}')
 
-        self.date = datetime.datetime.strptime(self.quotes[-1].at, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        self.date = datetime.datetime.strptime(self.quotes[-1]['at'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
         print(f'{self.symbol} self.date = {self.date}')
 
         self.normalized_quantity = int(self.total_quantity * self.total_units_from_api / (self.bought_quantity + self.sold_quantity))
