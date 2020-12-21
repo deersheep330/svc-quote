@@ -25,7 +25,6 @@ class Fugle():
         self.url = f'https://api.fugle.tw/realtime/v0/intraday/quote?symbolId={self.symbol}&apiToken={self.api_token}'
         self.tick = 30 # call API every 30 seconds
         self.quotes = []
-        self.transactions = []
         self.bought_quantity = 0
         self.sold_quantity = 0
         self.total_quantity = 0
@@ -44,48 +43,49 @@ class Fugle():
             return False
 
     async def exec(self):
+
         while self.is_active() and not self.is_closed:
             self.quote()
             self.diff()
-            #time.sleep(self.tick)
             await asyncio.sleep(self.tick)
-        print(f'{self.symbol} self.is_close = {self.is_closed}')
-        print(f'{self.symbol} self.total_units_from_api = {self.total_units_from_api}')
-        print(f'{self.symbol} overall = {self.bought_quantity + self.sold_quantity}')
-        print(f'{self.symbol} self.total_quantity = {self.total_quantity}')
 
         self.date = datetime.datetime.strptime(self.quotes[-1]['at'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
-        print(f'{self.symbol} self.date = {self.date}')
-
         self.normalized_quantity = int(self.total_quantity * self.total_units_from_api / (self.bought_quantity + self.sold_quantity))
+        print(f'=== {self.symbol} information {self.date} ===')
+        print(f'is_close = {self.is_closed}')
+        print(f'total_units_from_api = {self.total_units_from_api}')
+        print(f'bought quantity = {self.bought_quantity}, sold_quantity = {self.sold_quantity}, overall_quantity = {self.bought_quantity + self.sold_quantity}')
+        print(f'diff_quantity = {self.total_quantity}')
+        print(f'normalized_diff_quantity = {self.normalized_quantity}')
 
     def quote(self):
         resp = requests.get(self.url)
         json = resp.json()
         self.is_closed = json['data']['quote']['isClosed']
         self.total_units_from_api = json['data']['quote']['total']['unit']
-        #print(f'self.is_close = {self.is_closed}')
-        #print(f'self.total_units_from_api = {self.total_units_from_api}')
         self.quotes.append(json['data']['quote']['order'])
         self.quotes[-1]['trade'] = json['data']['quote']['trade']
-        print(self.symbol + " : ")
-        pprint(self.quotes[-1])
-        #pprint(json)
+        #print(self.symbol + " : ")
+        #pprint(self.quotes[-1])
 
     def diff(self):
-        trade_price = self.quotes[-1]['trade']['price']
-        trade_quantity = self.quotes[-1]['trade']['unit']
-        ask_diff = abs(self.quotes[-1]['bestAsks'][0]['price'] - trade_price)
-        bid_diff = abs(trade_price - self.quotes[-1]['bestBids'][-1]['price'])
-        if ask_diff < bid_diff:
-            self.sold_quantity += trade_quantity
-        elif ask_diff > bid_diff:
-            self.bought_quantity += trade_quantity
-        else:
-            self.sold_quantity += trade_quantity / 2
-            self.bought_quantity += trade_quantity / 2
-        self.total_quantity = self.bought_quantity - self.sold_quantity
-        #print(f'{self.bought_quantity} {self.sold_quantity} {self.total_quantity}')
+        try:
+            trade_price = self.quotes[-1]['trade']['price']
+            trade_quantity = self.quotes[-1]['trade']['unit']
+            ask_diff = abs(self.quotes[-1]['bestAsks'][0]['price'] - trade_price)
+            bid_diff = abs(trade_price - self.quotes[-1]['bestBids'][-1]['price'])
+            if ask_diff < bid_diff:
+                self.sold_quantity += trade_quantity
+            elif ask_diff > bid_diff:
+                self.bought_quantity += trade_quantity
+            else:
+                self.sold_quantity += trade_quantity / 2
+                self.bought_quantity += trade_quantity / 2
+            self.total_quantity = self.bought_quantity - self.sold_quantity
+            #print(f'{self.bought_quantity} {self.sold_quantity} {self.total_quantity}')
+        except Exception as e:
+            print(e)
+            print(self.quotes[-1])
 
     def dump_to_file(self):
         if self.quotes is None or len(self.quotes) == 0:
