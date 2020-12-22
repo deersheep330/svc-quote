@@ -8,6 +8,7 @@ def read_api_token_from_config():
     if token is None:
         raise Exception('Cannot read API_TOKEN from ini file')
     else:
+        print(f'token: {token}')
         return token
 
 def read_api_token_from_env():
@@ -15,6 +16,7 @@ def read_api_token_from_env():
     if token is None:
         raise Exception('Cannot read API_TOKEN from env')
     else:
+        print(f'token: {token}')
         return token
 
 def get_api_token():

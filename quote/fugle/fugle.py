@@ -65,6 +65,7 @@ class Fugle():
         self.total_units_from_api = json['data']['quote']['total']['unit']
         self.quotes.append(json['data']['quote']['order'])
         self.quotes[-1]['trade'] = json['data']['quote']['trade']
+        print(f"{self.symbol} / {self.total_units_from_api} / {self.quotes[-1]['at']}")
         #print(self.symbol + " : ")
         #pprint(self.quotes[-1])
 
