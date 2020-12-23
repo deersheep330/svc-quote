@@ -1,1 +1,1 @@
-from .fugle import Fugle
+from .fugle2 import Fugle
