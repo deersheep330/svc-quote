@@ -1,7 +1,7 @@
 import json
 
 if __name__ == '__main__':
-    with open('dump-2317.txt') as f:
+    with open('dump-2888.txt') as f:
         records = json.load(f)
         ask_units = 0
         bid_units = 0
@@ -34,26 +34,21 @@ if __name__ == '__main__':
                 if cur_ask['price'] == prev_ask['price']:
                     if cur_ask['unit'] < prev_ask['unit']:
                         ask_units += prev_ask['unit'] - cur_ask['unit']
-                    prev_ask['unit'] = cur_ask['unit']
                 elif cur_ask['price'] > prev_ask['price']:
                     ask_units += prev_ask['unit']
-                    prev_ask['price'] = cur_ask['price']
-                    prev_ask['unit'] = cur_ask['unit']
-                elif cur_ask['price'] < prev_ask['price']:
-                    prev_ask['price'] = cur_ask['price']
-                    prev_ask['unit'] = cur_ask['unit']
+
+                prev_ask['price'] = cur_ask['price']
+                prev_ask['unit'] = cur_ask['unit']
 
                 # bid side
                 if cur_bid['price'] == prev_bid['price']:
                     if cur_bid['unit'] < prev_bid['unit']:
                         bid_units += prev_bid['unit'] - cur_bid['unit']
-                    prev_bid['unit'] = cur_bid['unit']
                 elif cur_bid['price'] < prev_bid['price']:
                     bid_units += prev_bid['unit']
-                    prev_bid['price'] = cur_bid['price']
-                    prev_bid['unit'] = cur_bid['unit']
-                elif cur_bid['price'] > prev_bid['price']:
-                    prev_bid['price'] = cur_bid['price']
-                    prev_bid['unit'] = cur_bid['unit']
+
+                prev_bid['price'] = cur_bid['price']
+                prev_bid['unit'] = cur_bid['unit']
+
         print(ask_units)
         print(bid_units)
