@@ -1,2 +1,2 @@
-58 8 * * 1-5 root /usr/local/bin/python /home/app/main.py >> /var/log/cron.log 2>&1
+1 9 * * 1-5 root /usr/local/bin/python /home/app/main.py >> /var/log/cron.log 2>&1
 # Don't remove the empty line at the end of this file. It is required to run the cron job

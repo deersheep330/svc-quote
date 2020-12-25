@@ -42,8 +42,8 @@ class Fugle():
             'unit': 0
         }
 
-        self.on_time = datetime.time(8, 55)
-        self.off_time = datetime.time(13, 35)
+        self.on_time = datetime.time(9, 1)
+        self.off_time = datetime.time(13, 32)
 
         self.is_closed = False
         self.date = None
@@ -118,7 +118,7 @@ class Fugle():
 
             self.diff_units = self.ask_units - self.bid_units
         except Exception as e:
-            print(e)
+            print(f'diff for symbol {self.symbol} exception: {e}')
 
     def dump_to_file(self):
         if self.quotes is None or len(self.quotes) == 0:

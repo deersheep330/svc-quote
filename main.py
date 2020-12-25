@@ -14,7 +14,7 @@ if __name__ == '__main__':
     over_solds = []
     _date = date.today()
     retry = 0
-    max_retry = 9
+    max_retry = 7
 
     while len(over_boughts) == 0 or len(over_solds) == 0:
         print(f'date = {_date}')
