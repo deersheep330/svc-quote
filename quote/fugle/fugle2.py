@@ -70,18 +70,42 @@ class Fugle():
         print(f'diff = {self.diff_units}')
 
     def quote(self):
-        resp = requests.get(self.url)
-        json = resp.json()
-        self.is_closed = json['data']['quote']['isClosed']
-        self.quotes.append(json['data']['quote']['order'])
-        self.quotes[-1]['trade'] = json['data']['quote']['trade']
-        print(f"{self.symbol} / {self.quotes[-1]['trade']['price']} / {self.quotes[-1]['at']}")
+        try:
+            resp = requests.get(self.url)
+            json = resp.json()
+            self.is_closed = json['data']['quote']['isClosed']
+            self.quotes.append(json['data']['quote']['order'])
+            self.quotes[-1]['trade'] = json['data']['quote']['trade']
+
+            # less than 5 order prices
+            for ele in reversed(self.quotes[-1]['bestAsks']):
+                if ele['price'] == 0:
+                    self.quotes[-1]['bestAsks'].remove(ele)
+            for ele in reversed(self.quotes[-1]['bestBids']):
+                if ele['price'] == 0:
+                    self.quotes[-1]['bestBids'].remove(ele)
+
+            # no transaction
+            if len(self.quotes[-1]['bestAsks']) == 0 and len(self.quotes[-1]['bestBids']) == 0:
+                pass
+
+            # corrupt data
+            if len(self.quotes[-1]['bestAsks']) == 0:
+                self.quotes[-1]['bestAsks'].append(self.quotes[-1]['bestBids'][0])
+                self.quotes[-1]['bestAsks'][0]['unit'] = 0
+            elif len(self.quotes[-1]['bestBids']) == 0:
+                self.quotes[-1]['bestBids'].append(self.quotes[-1]['bestAsks'][-1])
+                self.quotes[-1]['bestBids'][0]['unit'] = 0
+
+            print(f"{self.symbol} / {self.quotes[-1]['trade']['price']} / {self.quotes[-1]['at']}")
+        except Exception as e:
+            print(e)
 
     def diff(self):
         try:
             record = self.quotes[-1]
             # no transaction
-            if len(record['bestAsks']) == 0 or len(record['bestBids']) == 0:
+            if len(record['bestAsks']) == 0 and len(record['bestBids']) == 0:
                 pass
             cur_ask = record['bestAsks'][0]
             cur_bid = record['bestBids'][-1]
@@ -119,6 +143,7 @@ class Fugle():
             self.diff_units = self.ask_units - self.bid_units
         except Exception as e:
             print(f'diff for symbol {self.symbol} exception: {e}')
+            pprint(self.quotes)
 
     def dump_to_file(self):
         if self.quotes is None or len(self.quotes) == 0:
