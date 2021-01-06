@@ -8,6 +8,7 @@ import grpc
 
 from api.protos import database_pb2_grpc
 from api.protos.database_pb2 import BoughtOrSold
+from api.protos.protobuf_datatype_utils import datetime_to_timestamp
 from quote.utils import get_api_token, get_grpc_hostname
 
 class Fugle():
@@ -170,14 +171,14 @@ class Fugle():
             if self.type == 'overbought':
                 rowcount = self.stub.insert_fugle_over_bought(BoughtOrSold(
                     symbol=_dict['symbol'],
-                    date=_dict['date'],
+                    date=datetime_to_timestamp(_dict['date']),
                     quantity=_dict['quantity']
                 ))
                 print(rowcount)
             elif self.type == 'oversold':
                 rowcount = self.stub.insert_fugle_over_sold(BoughtOrSold(
                     symbol=_dict['symbol'],
-                    date=_dict['date'],
+                    date=datetime_to_timestamp(_dict['date']),
                     quantity=_dict['quantity']
                 ))
                 print(rowcount)
