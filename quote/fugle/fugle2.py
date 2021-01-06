@@ -3,24 +3,21 @@ import json
 import os
 from pprint import pprint
 import asyncio
-
 import requests
+import grpc
 
-from ..db import create_engine, get_db_hostname, start_session, insert
-from ..models import FugleOverSold, FugleOverBought
-from ..utils import get_api_token
+from api.protos import database_pb2_grpc
+from api.protos.database_pb2 import BoughtOrSold
+from quote.utils import get_api_token, get_grpc_hostname
 
 class Fugle():
 
     def __init__(self, type, symbol):
 
-        if type == 'overbought':
-            self.model = FugleOverBought
-        elif type == 'oversold':
-            self.model = FugleOverSold
-        else:
-            raise Exception(f'unknown type: {type}')
+        channel = grpc.insecure_channel(f'{get_grpc_hostname()}:6565')
+        self.stub = database_pb2_grpc.DatabaseStub(channel)
 
+        self.type = type
         self.symbol = symbol
         self.api_token = get_api_token()
         self.url = f'https://api.fugle.tw/realtime/v0/intraday/quote?symbolId={self.symbol}&apiToken={self.api_token}'
@@ -62,8 +59,9 @@ class Fugle():
             self.diff()
             await asyncio.sleep(self.tick)
 
-        self.date = datetime.datetime.strptime(self.quotes[-1]['at'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
-        self.diff_units = int(self.ask_units - self.bid_units)
+        if len(self.quotes) != 0:
+            self.date = datetime.datetime.strptime(self.quotes[-1]['at'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+            self.diff_units = int(self.ask_units - self.bid_units)
         print(f'=== {self.symbol} information {self.date} ===')
         print(f'is_close = {self.is_closed}')
         print(f'ask = {self.ask_units}, bid = {self.bid_units}')
@@ -146,7 +144,7 @@ class Fugle():
             pprint(self.quotes)
 
     def dump_to_file(self):
-        if self.quotes is None or len(self.quotes) == 0:
+        if len(self.quotes) == 0:
             pass
         else:
 
@@ -159,8 +157,9 @@ class Fugle():
                 json.dump(self.quotes, f, ensure_ascii=False, indent=4)
 
     def save_to_db(self):
-        engine = create_engine('mysql+pymysql', 'root', 'admin', get_db_hostname(), '3306', 'mydb')
-        session = start_session(engine)
+
+        if len(self.quotes) == 0:
+            return
 
         _dict = {
             'symbol': self.symbol,
@@ -168,8 +167,23 @@ class Fugle():
             'quantity': self.diff_units
         }
         try:
-            insert(session, self.model, _dict)
-        except Exception as e:
-            print(f'insert entry error: {e}')
-        session.commit()
-        session.close()
+            if self.type == 'overbought':
+                rowcount = self.stub.insert_fugle_over_bought(BoughtOrSold(
+                    symbol=_dict['symbol'],
+                    date=_dict['date'],
+                    quantity=_dict['quantity']
+                ))
+                print(rowcount)
+            elif self.type == 'oversold':
+                rowcount = self.stub.insert_fugle_over_sold(BoughtOrSold(
+                    symbol=_dict['symbol'],
+                    date=_dict['date'],
+                    quantity=_dict['quantity']
+                ))
+                print(rowcount)
+            else:
+                raise Exception(f'unsupported type: {self.type}')
+        except grpc.RpcError as e:
+            status_code = e.code()
+            print(e.details())
+            print(status_code.name, status_code.value)
