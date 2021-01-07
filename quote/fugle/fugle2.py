@@ -61,7 +61,8 @@ class Fugle():
             await asyncio.sleep(self.tick)
 
         if len(self.quotes) != 0:
-            self.date = datetime.datetime.strptime(self.quotes[-1]['at'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+            #self.date = datetime.datetime.strptime(self.quotes[-1]['at'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+            self.date = datetime.datetime.strptime(self.quotes[-1]['at'], '%Y-%m-%dT%H:%M:%S.%fZ')
             self.diff_units = int(self.ask_units - self.bid_units)
         print(f'=== {self.symbol} information {self.date} ===')
         print(f'is_close = {self.is_closed}')
