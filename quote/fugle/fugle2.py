@@ -163,6 +163,8 @@ class Fugle():
         if len(self.quotes) == 0:
             return
 
+        print(f'==> {self.symbol} save to db: {self.date} {self.diff_units}')
+
         _dict = {
             'symbol': self.symbol,
             'date': self.date,

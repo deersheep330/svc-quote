@@ -1,3 +1,4 @@
+from api.protos.database_pb2 import Symbol
 from quote.fugle import Fugle
 import asyncio
 from datetime import date, timedelta, datetime
@@ -48,6 +49,9 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
+
+    _test_res = stub.get_stock(Symbol(symbol='AAPL'))
+    print(f'==> test read before write: get symbol {_test_res}')
 
     for symbol in symbols:
         symbol.dump_to_file()
