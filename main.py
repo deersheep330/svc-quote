@@ -57,6 +57,13 @@ if __name__ == '__main__':
     except Exception as e:
         print(e)
 
+    try:
+        print(f'==> try again test read before write')
+        _test_res = stub.get_stock(Symbol(symbol='AAPL'))
+        print(f'==> get symbol {_test_res}')
+    except Exception as e:
+        print(e)
+
     for symbol in symbols:
         symbol.dump_to_file()
         symbol.save_to_db()
