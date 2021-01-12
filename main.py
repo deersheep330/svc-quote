@@ -50,8 +50,12 @@ if __name__ == '__main__':
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
 
-    _test_res = stub.get_stock(Symbol(symbol='AAPL'))
-    print(f'==> test read before write: get symbol {_test_res}')
+    try:
+        print(f'==> test read before write')
+        _test_res = stub.get_stock(Symbol(symbol='AAPL'))
+        print(f'==> get symbol {_test_res}')
+    except Exception as e:
+        print(e)
 
     for symbol in symbols:
         symbol.dump_to_file()
